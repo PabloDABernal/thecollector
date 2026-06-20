@@ -58,9 +58,11 @@ export interface BattleState {
   // ── Cooldowns del jugador ─────────────────────────────────────────────────
   /**
    * idHabilidad → turnos restantes. 0 = disponible.
-   * Solo cooldowns del Líder/Aliados. Enemigo tendrá los suyos aparte.
+   * Cooldowns del Líder y sus Aliados.
    */
   cooldowns: Record<string, number>
+  /** Cooldowns de las habilidades del Enemigo. Misma semántica. */
+  cooldownsEnemigo: Record<string, number>
 }
 
 /** Tipos de acción disponibles durante el turno del jugador. */

@@ -20,8 +20,6 @@ export type EfectoAtomico =
   | {
       tipo: 'ataque'
       formula: FormulaAtaque
-      /** Si valorNucleo ≥ 3, usa formulaAlt en lugar de formula. */
-      umbral?: { formulaAlt: FormulaAtaque }
     }
   | { tipo: 'defensa'; valor: number }   // +X escudos al Líder (tope 5)
   | { tipo: 'curar'; valor: number }     // +X HP al Líder (sin pasar del máximo)
@@ -61,6 +59,11 @@ export interface Habilidad {
   id: string
   nombre: string
   efectos: EfectoAtomico[]
+  /**
+   * Lista alternativa de efectos que se ejecuta cuando valorNucleo ≥ 3.
+   * Si está ausente, siempre se usan los `efectos` base.
+   */
+  efectosUmbral?: EfectoAtomico[]
   coste: CosteHabilidad
   keywords: Keyword[]
 }

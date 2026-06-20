@@ -1,5 +1,6 @@
 export * from './nucleos'
 export * from './turno'
 export * from './efectos'
+export * from './habilidades'
 export { createRng } from './rng'
 export type { Rng } from './rng'

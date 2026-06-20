@@ -1,5 +1,8 @@
 import type { BattleState, TipoAccion } from './types'
 import { ENERGIA_MAX, MANO_MAX } from './types'
+import type { Habilidad } from '../../content/types'
+import type { NucleoColor } from '../nucleos'
+import { activarHabilidad, type ResultadoActivacion } from '../habilidades/activacion'
 
 // ── Consultas ─────────────────────────────────────────────────────────────────
 
@@ -75,14 +78,14 @@ export function activarCombo(state: BattleState): BattleState {
 // ── Huecos para contenido futuro ──────────────────────────────────────────────
 
 /**
- * TODO (Fase 1 cont.): activar una habilidad del Líder.
- * Requiere: definir Habilidad en content/, gastar Energía + Núcleo, aplicar efectos.
+ * Activa una habilidad del Líder. Delega en `activarHabilidad` (spec 04).
  */
 export function ejecutarHabilidadLider(
-  _state: BattleState,
-  _idHabilidad: string,
-): BattleState {
-  throw new Error('ejecutarHabilidadLider: pendiente de implementar (Fase 1 cont.)')
+  state: BattleState,
+  habilidad: Habilidad,
+  nucleoElegido: NucleoColor,
+): ResultadoActivacion {
+  return activarHabilidad(state, habilidad, nucleoElegido, 'jugador')
 }
 
 /**

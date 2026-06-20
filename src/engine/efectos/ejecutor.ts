@@ -1,5 +1,6 @@
 import type { NucleoColor } from '../nucleos'
 import type { EfectoAtomico, FormulaAtaque, Keyword } from '../../content/types'
+// Nota: la selección de efectosUmbral vs efectos base ocurre en engine/habilidades/activacion.ts
 import type { BattleState } from '../turno/types'
 import { ENERGIA_MAX, MANO_MAX, ESCUDO_MAX } from '../turno/types'
 import { aplicarDañoALider, aplicarDañoAEnemigo, type OpcionesDañoLider } from './daño'
@@ -44,11 +45,7 @@ export function aplicarEfecto(
   switch (efecto.tipo) {
     // ── Ataque ─────────────────────────────────────────────────────────────
     case 'ataque': {
-      const formula =
-        efecto.umbral && ctx.valorNucleo >= 3
-          ? efecto.umbral.formulaAlt
-          : efecto.formula
-      const dano = calcularDaño(formula, ctx.valorNucleo)
+      const dano = calcularDaño(efecto.formula, ctx.valorNucleo)
 
       if (ctx.fuente === 'jugador') {
         return aplicarDañoAEnemigo(state, dano)

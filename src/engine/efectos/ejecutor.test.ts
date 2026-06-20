@@ -43,32 +43,17 @@ describe('Ataque — fórmulas', () => {
     expect(s2.enemyHp).toBe(12)
   })
 
-  it('{suma 3, umbral: multiplica 2}: Núcleo 2 → 5; Núcleo 4 → 8', () => {
+  // El umbral ya NO vive en el efecto de Ataque: vive en Habilidad.efectosUmbral.
+  // Los tests de umbral están en engine/habilidades/activacion.test.ts (spec 04).
+  it('ejecutor aplica solo la formula recibida, sin decidir umbral', () => {
     const s = createBattleState({ enemyHp: 20 })
-    const efecto: EfectoAtomico = {
-      tipo: 'ataque',
-      formula: { tipo: 'suma', x: 3 },
-      umbral: { formulaAlt: { tipo: 'multiplica', x: 2 } },
-    }
-    // Núcleo 2 → bajo umbral → suma 3 → daño 5
-    const s1 = aplicarEfecto(s, efecto, ctxJugador(2))
-    expect(s1.enemyHp).toBe(15)
-
-    // Núcleo 4 → ≥3 → multiplica 2 → daño 8
-    const s2 = aplicarEfecto(s, efecto, ctxJugador(4))
+    // El ejecutor siempre usa la fórmula que le dan; la activación elige cuál.
+    const efectoSuma: EfectoAtomico = { tipo: 'ataque', formula: { tipo: 'suma', x: 3 } }
+    const efectoMult: EfectoAtomico = { tipo: 'ataque', formula: { tipo: 'multiplica', x: 2 } }
+    const s1 = aplicarEfecto(s, efectoSuma, ctxJugador(4)) // 4+3=7
+    expect(s1.enemyHp).toBe(13)
+    const s2 = aplicarEfecto(s, efectoMult, ctxJugador(4)) // 4*2=8
     expect(s2.enemyHp).toBe(12)
-  })
-
-  it('Núcleo 3 exacto activa umbral (límite de frontera)', () => {
-    const s = createBattleState({ enemyHp: 20 })
-    const efecto: EfectoAtomico = {
-      tipo: 'ataque',
-      formula: { tipo: 'nucleo' },
-      umbral: { formulaAlt: { tipo: 'multiplica', x: 2 } },
-    }
-    // Núcleo 3 ≥ 3 → multiplica 2 → 6
-    const s2 = aplicarEfecto(s, efecto, ctxJugador(3))
-    expect(s2.enemyHp).toBe(14)
   })
 })
 
