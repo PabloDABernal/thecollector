@@ -112,12 +112,13 @@ export interface Lider {
 // ─── Enemigo ─────────────────────────────────────────────────────────────────
 
 /**
- * Fase adicional de un Enemigo.
- * Se activa cuando su HP cae a `umbral` o por debajo.
- * `habilidades` reemplaza por completo el set de la fase anterior.
+ * Una fase del Enemigo.
+ * `activaA` = HP al que esta fase está activa (se activa cuando hp ≤ activaA).
+ * La fase 1 tiene activaA = hpTotal; fases posteriores tienen umbrales menores.
+ * Orden en el array: de mayor a menor activaA.
  */
 export interface FaseEnemigo {
-  umbral: number
+  activaA: number
   habilidades: Habilidad[]
 }
 
@@ -125,11 +126,10 @@ export interface Enemigo {
   id: string
   nombre: string
   hpTotal: number
-  /** Habilidades de la primera fase (estado inicial). */
-  habilidades: Habilidad[]
   /**
-   * Fases adicionales ordenadas por umbral descendente.
-   * La lógica de cambio de fase se implementa en el engine (Fase 1 cont.).
+   * Todas las fases del enemigo, ordenadas de mayor a menor `activaA`.
+   * La primera fase tiene activaA = hpTotal.
+   * `faseActiva(hp, fases)` en el engine deriva la fase activa sin guardar estado.
    */
   fases: FaseEnemigo[]
 }

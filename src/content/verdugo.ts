@@ -1,4 +1,4 @@
-import type { Habilidad, Enemigo } from './types'
+import type { Habilidad, Enemigo, FaseEnemigo } from './types'
 
 // ─── Habilidades del Verdugo ──────────────────────────────────────────────────
 
@@ -64,19 +64,17 @@ export const DECAPITACION: Habilidad = {
 
 // ─── El Verdugo (Enemigo) ─────────────────────────────────────────────────────
 
+/** Fases del Verdugo. `activaA` = HP al que esta fase es activa. */
+export const FASES_VERDUGO: [FaseEnemigo, FaseEnemigo] = [
+  /** Fase 1 — activa desde HP=80 hasta HP>40. Habilidad especial: Ejecución (CD2 ⚫4). */
+  { activaA: 80, habilidades: [TAJO, GRITO_DE_GUERRA, EJECUCION, PROCLAMA] },
+  /** Fase 2 — activa cuando HP≤40. Ejecución → Decapitación. */
+  { activaA: 40, habilidades: [TAJO, GRITO_DE_GUERRA, DECAPITACION, PROCLAMA] },
+]
+
 export const VERDUGO: Enemigo = {
   id: 'verdugo',
   nombre: 'El Verdugo',
   hpTotal: 80,
-
-  /** Fase 1 (80 → 40 HP): habilidades base. */
-  habilidades: [TAJO, GRITO_DE_GUERRA, EJECUCION, PROCLAMA],
-
-  /** Fase 2 (≤40 HP): Ejecución → Decapitación. El resto no cambia. */
-  fases: [
-    {
-      umbral: 40,
-      habilidades: [TAJO, GRITO_DE_GUERRA, DECAPITACION, PROCLAMA],
-    },
-  ],
+  fases: FASES_VERDUGO,
 }

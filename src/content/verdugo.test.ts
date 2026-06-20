@@ -3,6 +3,7 @@ import { createBattleState } from '../engine/turno/estado'
 import { activarHabilidad } from '../engine/habilidades/activacion'
 import {
   VERDUGO,
+  FASES_VERDUGO,
   TAJO,
   GRITO_DE_GUERRA,
   EJECUCION,
@@ -17,13 +18,17 @@ describe('VERDUGO — estructura', () => {
     expect(VERDUGO.hpTotal).toBe(80)
   })
 
-  it('Fase 1: 4 habilidades con CDs 1/1/2/3', () => {
-    const cds = VERDUGO.habilidades.map((h) => h.coste.cd)
+  it('tiene 2 fases', () => {
+    expect(VERDUGO.fases).toHaveLength(2)
+  })
+
+  it('Fase 1 (activaA=80): 4 habilidades con CDs 1/1/2/3', () => {
+    const cds = FASES_VERDUGO[0]!.habilidades.map((h) => h.coste.cd)
     expect(cds).toEqual([1, 1, 2, 3])
   })
 
   it('Fase 1: todas las habilidades son ⚫ (color null)', () => {
-    VERDUGO.habilidades.forEach((h) => {
+    FASES_VERDUGO[0]!.habilidades.forEach((h) => {
       expect(h.coste.color).toBeNull()
     })
   })
@@ -32,12 +37,12 @@ describe('VERDUGO — estructura', () => {
     expect(EJECUCION.coste.valorMinimo).toBe(4)
   })
 
-  it('Fase 2 se activa con umbral ≤40', () => {
-    expect(VERDUGO.fases[0]!.umbral).toBe(40)
+  it('Fase 2 tiene activaA=40', () => {
+    expect(FASES_VERDUGO[1]!.activaA).toBe(40)
   })
 
   it('Fase 2: Decapitación reemplaza a Ejecución', () => {
-    const ids = VERDUGO.fases[0]!.habilidades.map((h) => h.id)
+    const ids = FASES_VERDUGO[1]!.habilidades.map((h) => h.id)
     expect(ids).toContain('verdugo-decapitacion')
     expect(ids).not.toContain('verdugo-ejecucion')
   })
