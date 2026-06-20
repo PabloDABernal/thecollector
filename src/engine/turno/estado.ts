@@ -24,6 +24,7 @@ export function createBattleState(overrides?: Partial<BattleState>): BattleState
     comboActivo: false,
     trama: 0,
     dramaturgia: [],
+    dramaturgiaDescarte: [],
     cooldowns: {},
     cooldownsEnemigo: {},
     ...overrides,

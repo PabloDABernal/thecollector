@@ -1,9 +1,5 @@
 import type { NucleoPool } from '../nucleos'
-
-// Placeholder: se reemplazará con el tipo completo en la spec de Dramaturgia.
-export interface DramaturgiaCard {
-  id: string
-}
+import type { CartaDramaturgia } from '../../content/types'
 
 export const ENERGIA_INICIAL = 2
 export const ENERGIA_MAX = 5
@@ -65,8 +61,10 @@ export interface BattleState {
   trama: number
 
   // ── Dramaturgia (mazo del enemigo) ────────────────────────────────────────
-  /** Stub: se llenará cuando implementemos la spec de Dramaturgia. */
-  dramaturgia: DramaturgiaCard[]
+  /** Mazo activo. Carta [0] = cima. */
+  dramaturgia: CartaDramaturgia[]
+  /** Pila de descarte. Las cartas robadas van aquí tras resolverse. */
+  dramaturgiaDescarte: CartaDramaturgia[]
 
   // ── Cooldowns del jugador ─────────────────────────────────────────────────
   /**

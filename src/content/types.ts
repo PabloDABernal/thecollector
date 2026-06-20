@@ -133,3 +133,18 @@ export interface Enemigo {
    */
   fases: FaseEnemigo[]
 }
+
+// ─── Dramaturgia ──────────────────────────────────────────────────────────────
+
+/** ⚔️ = 'ataque' activa la habilidad de Ataque del enemigo; 📜 = 'trama' activa la de Trama. */
+export type IconoDramaturgia = 'ataque' | 'trama'
+export type OrigenDramaturgia = 'Verdugo' | 'Bastión' | 'Común'
+
+/** Carta del mazo de Dramaturgia (runtime, sin campo copias). */
+export interface CartaDramaturgia {
+  id: string
+  nombre: string
+  origen: OrigenDramaturgia
+  icono: IconoDramaturgia
+  efectos: EfectoAtomico[]
+}
