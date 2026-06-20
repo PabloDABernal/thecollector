@@ -1,7 +1,7 @@
 import type { NucleoColor } from '../nucleos'
 import type { EfectoAtomico, FormulaAtaque, Keyword } from '../../content/types'
 // Nota: la selección de efectosUmbral vs efectos base ocurre en engine/habilidades/activacion.ts
-import type { BattleState } from '../turno/types'
+import type { BattleState, EsbirroEnMesa } from '../turno/types'
 import { ENERGIA_MAX, MANO_MAX, ESCUDO_MAX } from '../turno/types'
 import { aplicarDañoALider, aplicarDañoAEnemigo, type OpcionesDañoLider } from './daño'
 
@@ -93,10 +93,28 @@ export function aplicarEfecto(
         mano: Math.min(MANO_MAX, state.mano + efecto.cantidad),
       }
 
+    // ── Invocar ────────────────────────────────────────────────────────────
+    case 'invocar': {
+      const id = state.nextEsbirroId
+      const esbirro: EsbirroEnMesa = {
+        instanceId: `esbirro-${id}`,
+        templateId: efecto.esbirro.id,
+        nombre: efecto.esbirro.nombre,
+        vidaActual: efecto.esbirro.vida,
+        ataque: efecto.esbirro.ataque,
+        keywords: [...efecto.esbirro.keywords],
+        recienInvocado: true,
+      }
+      return {
+        ...state,
+        esbirros: [...state.esbirros, esbirro],
+        nextEsbirroId: id + 1,
+      }
+    }
+
     // ── Pendientes ─────────────────────────────────────────────────────────
     case 'cancelar':
     case 'aplicar-estado':
-    case 'invocar':
     case 'modificar-dado':
       throw new Error(
         `aplicarEfecto: efecto '${efecto.tipo}' no implementado aún`,

@@ -286,12 +286,15 @@ describe('efectos pendientes (stub)', () => {
     )
   })
 
-  it('invocar lanza error "no implementado aún"', () => {
+  it('invocar: ahora implementado — añade esbirro al estado', () => {
     const s = createBattleState()
-    const efecto: EfectoAtomico = { tipo: 'invocar', datos: {} }
-    expect(() => aplicarEfecto(s, efecto, ctxJugador(1))).toThrowError(
-      /no implementado/,
-    )
+    const efecto: EfectoAtomico = {
+      tipo: 'invocar',
+      esbirro: { id: 'test', nombre: 'Test', vida: 3, ataque: 1, keywords: [] },
+    }
+    const s2 = aplicarEfecto(s, efecto, ctxJugador(1))
+    expect(s2.esbirros).toHaveLength(1)
+    expect(s2.esbirros[0]!.vidaActual).toBe(3)
   })
 
   it('aplicar-estado lanza error', () => {

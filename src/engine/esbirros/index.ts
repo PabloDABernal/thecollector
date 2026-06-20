@@ -1,0 +1,1 @@
+export { limpiarEsbirrosMuertos } from './mesa'

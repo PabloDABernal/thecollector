@@ -10,6 +10,8 @@ export function createBattleState(overrides?: Partial<BattleState>): BattleState
     enemyMaxHp: 20,
     escudos: 0,
     aliados: [],
+    esbirros: [],
+    nextEsbirroId: 0,
     energia: ENERGIA_INICIAL,
     mano: 0,
     pool: {},

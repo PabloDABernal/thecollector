@@ -6,6 +6,25 @@
 
 import type { NucleoColor } from '../engine/nucleos'
 
+// ─── Esbirros ─────────────────────────────────────────────────────────────────
+
+/** Keywords propias de los esbirros (distintas de las habilidades del Líder). */
+export type EsbirroKeyword = 'Defensor'
+
+/**
+ * Plantilla de un tipo de esbirro.
+ * La vida es un parámetro de la invocación, no hay un tipo por cada valor.
+ */
+export interface EsbirroTemplate {
+  id: string
+  nombre: string
+  /** Vida base. La invocación puede sobrescribirla (p. ej. refuerzo de vida 3). */
+  vida: number
+  /** Daño plano por activación (no usa Núcleo). */
+  ataque: number
+  keywords: EsbirroKeyword[]
+}
+
 // ─── Fórmulas de Ataque ───────────────────────────────────────────────────────
 
 export type FormulaAtaque =
@@ -26,10 +45,10 @@ export type EfectoAtomico =
   | { tipo: 'trama'; valor: number }     // mueve el contador de Trama
   | { tipo: 'energia'; valor: number }   // +/- Energía (clamp 0-5)
   | { tipo: 'robar'; cantidad: number }  // roba cartas (tope mano 10)
+  | { tipo: 'invocar'; esbirro: EsbirroTemplate }  // añade esbirro al tablero enemigo
   // ── Pendientes (tipo definido, ejecutor lanza error claro) ──────────────────
   | { tipo: 'cancelar'; alcance: string }
   | { tipo: 'aplicar-estado'; estado: string; duracion: number }
-  | { tipo: 'invocar'; datos: Record<string, unknown> }
   | { tipo: 'modificar-dado'; datos: Record<string, unknown> }
 
 // ─── Keywords ─────────────────────────────────────────────────────────────────

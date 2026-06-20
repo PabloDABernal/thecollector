@@ -30,6 +30,11 @@ export interface BattleState {
   // ── Aliados en mesa ───────────────────────────────────────────────────────
   aliados: AliAdoEnMesa[]
 
+  // ── Esbirros del enemigo en mesa ─────────────────────────────────────────
+  esbirros: EsbirroEnMesa[]
+  /** Contador para IDs únicos de instancias de esbirros. */
+  nextEsbirroId: number
+
   // ── Recursos del jugador ─────────────────────────────────────────────────
   /** 0-5. Empieza en ENERGIA_INICIAL (2). */
   energia: number
@@ -82,4 +87,23 @@ export interface AliAdoEnMesa {
   hp: number
   maxHp: number
   // CD, habilidades y efectos propios: Fase 2+
+}
+
+/**
+ * Esbirro del enemigo en mesa.
+ * keywords como string[] para evitar importar EsbirroKeyword desde content.
+ */
+export interface EsbirroEnMesa {
+  /** ID único de esta instancia en la partida. */
+  instanceId: string
+  /** ID del tipo base (EsbirroTemplate.id). */
+  templateId: string
+  nombre: string
+  vidaActual: number
+  /** Daño plano por activación (no usa Núcleo). */
+  ataque: number
+  /** 'Defensor', etc. */
+  keywords: string[]
+  /** true el turno en que entra: no actúa hasta el siguiente turno enemigo. */
+  recienInvocado: boolean
 }
