@@ -1,0 +1,71 @@
+/**
+ * Content Schema — la fuente de datos del juego.
+ * Habilidades, cartas y efectos se describen AQUÍ como datos tipados.
+ * El engine (ejecutor) los interpreta; nunca hay código por carta.
+ */
+
+import type { NucleoColor } from '../engine/nucleos'
+
+// ─── Fórmulas de Ataque ───────────────────────────────────────────────────────
+
+export type FormulaAtaque =
+  | { tipo: 'nucleo' }               // daño = valorNucleo
+  | { tipo: 'suma'; x: number }      // daño = valorNucleo + x
+  | { tipo: 'multiplica'; x: number } // daño = valorNucleo × x
+
+// ─── Efectos atómicos ─────────────────────────────────────────────────────────
+
+export type EfectoAtomico =
+  // ── Núcleo combativo — implementados ────────────────────────────────────────
+  | {
+      tipo: 'ataque'
+      formula: FormulaAtaque
+      /** Si valorNucleo ≥ 3, usa formulaAlt en lugar de formula. */
+      umbral?: { formulaAlt: FormulaAtaque }
+    }
+  | { tipo: 'defensa'; valor: number }   // +X escudos al Líder (tope 5)
+  | { tipo: 'curar'; valor: number }     // +X HP al Líder (sin pasar del máximo)
+  | { tipo: 'trama'; valor: number }     // mueve el contador de Trama
+  | { tipo: 'energia'; valor: number }   // +/- Energía (clamp 0-5)
+  | { tipo: 'robar'; cantidad: number }  // roba cartas (tope mano 10)
+  // ── Pendientes (tipo definido, ejecutor lanza error claro) ──────────────────
+  | { tipo: 'cancelar'; alcance: string }
+  | { tipo: 'aplicar-estado'; estado: string; duracion: number }
+  | { tipo: 'invocar'; datos: Record<string, unknown> }
+  | { tipo: 'modificar-dado'; datos: Record<string, unknown> }
+
+// ─── Keywords ─────────────────────────────────────────────────────────────────
+
+export type Keyword =
+  | 'Arrollar'      // exceso de daño al Líder al derrotar Aliado
+  | 'Combo'         // concede 3ª acción si se usa esta habilidad
+  | 'Inabsorbible'  // el daño ignora escudos y Aliados
+  // más keywords en Fases siguientes
+
+// ─── Coste de habilidad / carta ───────────────────────────────────────────────
+
+export interface CosteHabilidad {
+  /** Cooldown: turnos que tarda en volver a estar disponible. Mínimo 1. */
+  cd: number
+  /** null = ⚫ (cualquier color). Lista = uno de esos colores. */
+  color: NucleoColor[] | null
+  /** Valor mínimo del Núcleo requerido. Por defecto 1. */
+  valorMinimo: number
+  /** Solo cartas: coste adicional en Energía. */
+  energia?: number
+}
+
+// ─── Habilidad / Carta ────────────────────────────────────────────────────────
+
+export interface Habilidad {
+  id: string
+  nombre: string
+  efectos: EfectoAtomico[]
+  coste: CosteHabilidad
+  keywords: Keyword[]
+}
+
+/** Carta de mano: habilidad con coste de Energía obligatorio. */
+export interface Carta extends Habilidad {
+  coste: CosteHabilidad & { energia: number }
+}

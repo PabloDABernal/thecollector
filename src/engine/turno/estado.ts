@@ -5,7 +5,11 @@ import { ENERGIA_INICIAL, ACCIONES_POR_TURNO } from './types'
 export function createBattleState(overrides?: Partial<BattleState>): BattleState {
   return {
     leaderHp: 20,
+    leaderMaxHp: 20,
     enemyHp: 20,
+    enemyMaxHp: 20,
+    escudos: 0,
+    aliados: [],
     energia: ENERGIA_INICIAL,
     mano: 0,
     pool: {},

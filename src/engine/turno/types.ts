@@ -9,6 +9,7 @@ export const ENERGIA_INICIAL = 2
 export const ENERGIA_MAX = 5
 export const MANO_MAX = 10
 export const ACCIONES_POR_TURNO = 2
+export const ESCUDO_MAX = 5
 
 /**
  * Estado completo de una batalla en un instante dado.
@@ -18,7 +19,16 @@ export const ACCIONES_POR_TURNO = 2
 export interface BattleState {
   // ── Vida ─────────────────────────────────────────────────────────────────
   leaderHp: number
+  leaderMaxHp: number
   enemyHp: number
+  enemyMaxHp: number
+
+  // ── Defensa del Líder ─────────────────────────────────────────────────────
+  /** Fichas de escudo del Líder. Absorben daño 1:1. Tope: ESCUDO_MAX (5). */
+  escudos: number
+
+  // ── Aliados en mesa ───────────────────────────────────────────────────────
+  aliados: AliAdoEnMesa[]
 
   // ── Recursos del jugador ─────────────────────────────────────────────────
   /** 0-5. Empieza en ENERGIA_INICIAL (2). */
@@ -63,3 +73,11 @@ export type TipoAccion =
   | 'bajar-carta'               // necesita carta en mano con coste pagable (Fase 2+)
 
 export type EleccionInicio = 'generar-energia' | 'canalizar'
+
+/** Aliado del jugador en mesa. Absorbe daño redirigido. */
+export interface AliAdoEnMesa {
+  id: string
+  hp: number
+  maxHp: number
+  // CD, habilidades y efectos propios: Fase 2+
+}
