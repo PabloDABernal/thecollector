@@ -60,14 +60,22 @@ export function aplicarEfecto(
     }
 
     // ── Defensa ────────────────────────────────────────────────────────────
+    // Líder: tope ESCUDO_MAX (5). Enemigo: sin tope.
     case 'defensa':
-      return {
-        ...state,
-        escudos: Math.min(ESCUDO_MAX, state.escudos + efecto.valor),
+      if (ctx.fuente === 'enemigo') {
+        return { ...state, escudosEnemigo: state.escudosEnemigo + efecto.valor }
       }
+      return { ...state, escudos: Math.min(ESCUDO_MAX, state.escudos + efecto.valor) }
 
     // ── Curar ──────────────────────────────────────────────────────────────
+    // Cura a la fuente: jugador → Líder; enemigo → Enemigo.
     case 'curar':
+      if (ctx.fuente === 'enemigo') {
+        return {
+          ...state,
+          enemyHp: Math.min(state.enemyMaxHp, state.enemyHp + efecto.valor),
+        }
+      }
       return {
         ...state,
         leaderHp: Math.min(state.leaderMaxHp, state.leaderHp + efecto.valor),
@@ -110,6 +118,42 @@ export function aplicarEfecto(
         esbirros: [...state.esbirros, esbirro],
         nextEsbirroId: id + 1,
       }
+    }
+
+    // ── Daño fijo ──────────────────────────────────────────────────────────
+    // Enemigo → daña al Líder (con opción inabsorbible).
+    // Jugador → daña al Enemigo.
+    case 'dañoFijo': {
+      if (ctx.fuente === 'enemigo') {
+        return aplicarDañoALider(state, efecto.valor, {
+          inabsorbible: efecto.inabsorbible,
+        })
+      }
+      return aplicarDañoAEnemigo(state, efecto.valor)
+    }
+
+    // ── Descartar ──────────────────────────────────────────────────────────
+    case 'descartar':
+      return { ...state, mano: Math.max(0, state.mano - efecto.cantidad) }
+
+    // ── Buff de ataque temporal ────────────────────────────────────────────
+    // Acumula. Se limpia al inicio del turno del jugador (iniciarTurnoJugador).
+    case 'buffAtaqueTemporal':
+      return { ...state, buffAtaqueTemporal: state.buffAtaqueTemporal + efecto.valor }
+
+    // ── Siguiente daño inabsorbible ────────────────────────────────────────
+    // Flag de un solo uso; lo consume aplicarDañoALider.
+    case 'siguienteDañoInabsorbible':
+      return { ...state, siguienteDañoInabsorbible: true }
+
+    // ── Daño a todos los Aliados ───────────────────────────────────────────
+    case 'dañoATodosAliados': {
+      if (state.aliados.length === 0) return state
+      const nuevosAliados = state.aliados.map((a) => ({
+        ...a,
+        hp: Math.max(0, a.hp - efecto.valor),
+      }))
+      return { ...state, aliados: nuevosAliados }
     }
 
     // ── Pendientes ─────────────────────────────────────────────────────────

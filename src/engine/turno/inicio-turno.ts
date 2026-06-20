@@ -60,11 +60,12 @@ export function iniciarTurnoJugador(
   // Paso 3 — Elección de inicio gratuita
   s = aplicarEleccionInicio(s, eleccion)
 
-  // Paso 4 — Resetear acciones y Combo
+  // Paso 4 — Resetear acciones, Combo y buffs temporales del enemigo
   s = {
     ...s,
     accionesRestantes: ACCIONES_POR_TURNO,
     comboActivo: false,
+    buffAtaqueTemporal: 0,
     fase: 'jugador',
   }
 

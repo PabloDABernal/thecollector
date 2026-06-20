@@ -40,12 +40,18 @@ export type EfectoAtomico =
       tipo: 'ataque'
       formula: FormulaAtaque
     }
-  | { tipo: 'defensa'; valor: number }   // +X escudos al Líder (tope 5)
-  | { tipo: 'curar'; valor: number }     // +X HP al Líder (sin pasar del máximo)
+  | { tipo: 'defensa'; valor: number }   // +X escudos a la fuente (Líder: tope 5; enemigo: sin tope)
+  | { tipo: 'curar'; valor: number }     // +X HP a la fuente (Líder o enemigo, sin pasar del máximo)
   | { tipo: 'trama'; valor: number }     // mueve el contador de Trama
   | { tipo: 'energia'; valor: number }   // +/- Energía (clamp 0-5)
   | { tipo: 'robar'; cantidad: number }  // roba cartas (tope mano 10)
   | { tipo: 'invocar'; esbirro: EsbirroTemplate }  // añade esbirro al tablero enemigo
+  // ── Spec 06: efectos para Dramaturgia ────────────────────────────────────────
+  | { tipo: 'dañoFijo'; valor: number; inabsorbible?: boolean }  // daño plano, sin Núcleo
+  | { tipo: 'descartar'; cantidad: number }                       // jugador descarta N cartas
+  | { tipo: 'buffAtaqueTemporal'; valor: number }                 // +X al Ataque enemigo este turno
+  | { tipo: 'siguienteDañoInabsorbible' }                         // próximo daño al Líder ignora escudo/aliados
+  | { tipo: 'dañoATodosAliados'; valor: number }                  // daño fijo a cada Aliado del jugador
   // ── Pendientes (tipo definido, ejecutor lanza error claro) ──────────────────
   | { tipo: 'cancelar'; alcance: string }
   | { tipo: 'aplicar-estado'; estado: string; duracion: number }

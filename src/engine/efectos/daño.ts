@@ -13,6 +13,7 @@ export interface OpcionesDañoLider {
 
 /**
  * Aplica daño al Líder con todas las reglas de absorción:
+ *   0. Flag `siguienteDañoInabsorbible` → inabsorbible y se consume.
  *   1. Inabsorbible → directo a vida, sin escudos ni aliados.
  *   2. Aliado bloqueando → consume HP del aliado; exceso perdido (o al Líder si Arrollar).
  *   3. Normal → escudos absorben 1:1, resto a la vida.
@@ -23,6 +24,15 @@ export function aplicarDañoALider(
   opciones?: OpcionesDañoLider,
 ): BattleState {
   if (cantidad <= 0) return state
+
+  // ── Flag de un solo uso ───────────────────────────────────────────────────
+  if (state.siguienteDañoInabsorbible) {
+    return {
+      ...state,
+      siguienteDañoInabsorbible: false,
+      leaderHp: Math.max(0, state.leaderHp - cantidad),
+    }
+  }
 
   // ── Inabsorbible: ignora escudos y aliados ────────────────────────────────
   if (opciones?.inabsorbible) {
@@ -61,8 +71,17 @@ export function aplicarDañoALider(
 
 // ─── Daño al Enemigo ─────────────────────────────────────────────────────────
 
-/** Aplica daño directo al enemigo (sin mecánicas de escudo por ahora). */
+/**
+ * Aplica daño al enemigo.
+ * Los escudos del enemigo absorben 1:1, sin tope de acumulación.
+ */
 export function aplicarDañoAEnemigo(state: BattleState, cantidad: number): BattleState {
   if (cantidad <= 0) return state
-  return { ...state, enemyHp: Math.max(0, state.enemyHp - cantidad) }
+  const dañoResidual = Math.max(0, cantidad - state.escudosEnemigo)
+  const escudosRestantes = Math.max(0, state.escudosEnemigo - cantidad)
+  return {
+    ...state,
+    escudosEnemigo: escudosRestantes,
+    enemyHp: Math.max(0, state.enemyHp - dañoResidual),
+  }
 }

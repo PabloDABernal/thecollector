@@ -26,6 +26,14 @@ export interface BattleState {
   // ── Defensa del Líder ─────────────────────────────────────────────────────
   /** Fichas de escudo del Líder. Absorben daño 1:1. Tope: ESCUDO_MAX (5). */
   escudos: number
+  /** Fichas de escudo del Enemigo. Sin tope. */
+  escudosEnemigo: number
+
+  // ── Estados temporales de combate ─────────────────────────────────────────
+  /** +X al daño de los Ataques del enemigo este turno. Se limpia al inicio del turno del jugador. */
+  buffAtaqueTemporal: number
+  /** Si true, el próximo daño al Líder ignora escudo y Aliados (se consume al aplicar). */
+  siguienteDañoInabsorbible: boolean
 
   // ── Aliados en mesa ───────────────────────────────────────────────────────
   aliados: AliAdoEnMesa[]
