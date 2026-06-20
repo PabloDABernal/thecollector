@@ -5,4 +5,6 @@ export type {
   CosteHabilidad,
   Habilidad,
   Carta,
+  Lider,
 } from './types'
+export { FORJADOR } from './forjador'

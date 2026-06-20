@@ -72,3 +72,14 @@ export interface Habilidad {
 export interface Carta extends Habilidad {
   coste: CosteHabilidad & { energia: number }
 }
+
+// ─── Líder ────────────────────────────────────────────────────────────────────
+
+export interface Lider {
+  id: string
+  nombre: string
+  hp: number
+  /** Las 4 habilidades del Líder (CD 1/2/3/4). */
+  habilidades: [Habilidad, Habilidad, Habilidad, Habilidad]
+  // Niveles 2 y 3 de cada habilidad: Fase 2+
+}
