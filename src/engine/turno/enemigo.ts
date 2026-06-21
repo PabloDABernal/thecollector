@@ -1,11 +1,11 @@
-import type { BattleState, EfectoAplicado, OrigenEfectoAplicado } from './types'
+import type { BattleState, EfectoAplicado, OrigenEfectoAplicado, PoliticaRedireccion } from './types'
 import type { FaseEnemigo } from '../../content/types'
 import type { NucleoColor } from '../nucleos'
 import type { Rng } from '../rng'
 import { faseActiva } from '../enemigo/fases'
 import { elegirHabilidad, elegirNucleo, COLORES_JUGADOR_PROTOTIPO } from '../enemigo/ia'
 import { activarHabilidad } from '../habilidades/activacion'
-import { aplicarDañoALider } from '../efectos/daño'
+import { aplicarDañoALider, resolverDañoEntrante } from '../efectos/daño'
 import { robarCarta } from '../dramaturgia/mazo'
 import { aplicarEfecto } from '../efectos/ejecutor'
 
@@ -20,9 +20,16 @@ export interface ConfigTurnoEnemigo {
    * tarea futura.
    */
   idHabilidadPasivaEsbirros?: string
+  /**
+   * Función que decide si el daño de un esbirro va al Líder o a un Aliado.
+   * Default: siempre al Líder. Berserker ignora esta política (imposición).
+   */
+  politicaRedireccion?: PoliticaRedireccion
 }
 
-// ─── Helper: diferencia → entradas de registro ───────────────────────────────
+const POLITICA_SIEMPRE_LIDER: PoliticaRedireccion = () => ({ destino: 'lider' })
+
+// ─── Helpers: diferencia → registro ──────────────────────────────────────────
 
 /**
  * Compara dos estados y genera las entradas de registro que explican el cambio.
@@ -83,6 +90,23 @@ function diffToRegistro(
   return entries
 }
 
+/**
+ * Aplica las entradas de diffToRegistro directamente en after.efectosUltimoTurnoEnemigo.
+ * Devuelve `after` sin modificar si no hay diferencias relevantes.
+ */
+function registrar(
+  before: BattleState,
+  after: BattleState,
+  origen: OrigenEfectoAplicado,
+): BattleState {
+  const nuevas = diffToRegistro(before, after, origen)
+  if (nuevas.length === 0) return after
+  return {
+    ...after,
+    efectosUltimoTurnoEnemigo: [...after.efectosUltimoTurnoEnemigo, ...nuevas],
+  }
+}
+
 // ─── Turno completo del enemigo ───────────────────────────────────────────────
 
 /**
@@ -95,10 +119,10 @@ export function ejecutarTurnoEnemigo(
   rng: Rng,
   config: ConfigTurnoEnemigo,
 ): BattleState {
-  // Vaciar el registro del turno anterior al inicio de este turno
+  // Vaciar el registro del turno anterior; el nuevo se acumula en s directamente
   let s: BattleState = { ...state, efectosUltimoTurnoEnemigo: [] }
   const coloresJugador = config.coloresJugador ?? COLORES_JUGADOR_PROTOTIPO
-  const registro: EfectoAplicado[] = []
+  const politica = config.politicaRedireccion ?? POLITICA_SIEMPRE_LIDER
 
   // ── Paso 1: Inicio ──────────────────────────────────────────────────────────
 
@@ -136,7 +160,7 @@ export function ejecutarTurnoEnemigo(
   for (const efecto of carta.efectos) {
     const before = s
     s = aplicarEfecto(s, efecto, ctxCarta)
-    registro.push(...diffToRegistro(before, s, 'carta-dramaturgia'))
+    s = registrar(before, s, 'carta-dramaturgia')
   }
 
   // ── Paso 4: Ejecutar habilidad según el icono ───────────────────────────────
@@ -152,14 +176,14 @@ export function ejecutarTurnoEnemigo(
 
     if (resultActivacion.ok) {
       s = resultActivacion.state
-      registro.push(...diffToRegistro(before4, s, 'habilidad'))
+      s = registrar(before4, s, 'habilidad')
 
       // buffAtaqueTemporal: daño adicional si la habilidad es de Ataque
       const tieneAtaque = habilidad.efectos.some((e) => e.tipo === 'ataque')
       if (tieneAtaque && buffAntes > 0) {
         const before4b = s
         s = aplicarDañoALider(s, buffAntes)
-        registro.push(...diffToRegistro(before4b, s, 'habilidad'))
+        s = registrar(before4b, s, 'habilidad')
       }
 
       // Pasiva del Verdugo: Proclama (+1 Trama por esbirro en mesa)
@@ -171,7 +195,7 @@ export function ejecutarTurnoEnemigo(
       ) {
         const before4c = s
         s = { ...s, trama: s.trama + s.esbirros.length }
-        registro.push(...diffToRegistro(before4c, s, 'habilidad'))
+        s = registrar(before4c, s, 'habilidad')
       }
     }
     // Si activarHabilidad falla (nucleo-invalido inesperado), continúa sin habilidad.
@@ -181,16 +205,20 @@ export function ejecutarTurnoEnemigo(
 
   // Candidatos: esbirros que NO son recienInvocado (los invocados en paso 3 no actúan)
   // TODO (Defensor): los Defensores tienen prioridad de ataque
-  // TODO (Aliados jugador): el daño del esbirro se redirige al Aliado más frágil
   const candidatos = s.esbirros.filter((e) => !e.recienInvocado)
   if (candidatos.length > 0) {
     const idx = Math.floor(rng() * candidatos.length)
     const esbirro = candidatos[idx]!
-    const before5 = s
-    s = aplicarDañoALider(s, esbirro.ataque)
-    registro.push(...diffToRegistro(before5, s, 'esbirro'))
+    // resolverDañoEntrante aplica daño y registra en s.efectosUltimoTurnoEnemigo
+    s = resolverDañoEntrante(
+      s,
+      { cantidad: esbirro.ataque, inabsorbible: false },
+      politica,
+      'esbirro',
+    )
   }
 
-  // ── Paso 6: Fin — pasa el turno al jugador e inyecta el registro ────────────
-  return { ...s, fase: 'jugador', efectosUltimoTurnoEnemigo: registro }
+  // ── Paso 6: Fin — pasa el turno al jugador ──────────────────────────────────
+  // efectosUltimoTurnoEnemigo ya está poblado en s (acumulado durante el turno)
+  return { ...s, fase: 'jugador' }
 }

@@ -5,6 +5,8 @@ export type {
   EleccionInicio,
   EfectoAplicado,
   OrigenEfectoAplicado,
+  PoliticaRedireccion,
+  AliAdoEnMesa,
 } from './types'
 export {
   ENERGIA_INICIAL,

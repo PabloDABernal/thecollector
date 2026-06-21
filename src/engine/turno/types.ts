@@ -115,11 +115,24 @@ export type TipoAccion =
 
 export type EleccionInicio = 'generar-energia' | 'canalizar'
 
+/**
+ * Función que decide a dónde va el daño entrante de un ataque de esbirro.
+ * Recibe el estado actual y los atributos del daño; devuelve el destino.
+ * El default (siempre 'lider') se usa cuando config.politicaRedireccion es undefined.
+ * La IA del Líder implementará una política más sofisticada en Fase 2+.
+ */
+export type PoliticaRedireccion = (
+  state: BattleState,
+  daño: { cantidad: number; inabsorbible: boolean },
+) => { destino: 'lider' } | { destino: 'aliado'; instanceId: string }
+
 /** Aliado del jugador en mesa. Absorbe daño redirigido. */
 export interface AliAdoEnMesa {
   id: string
   hp: number
   maxHp: number
+  /** 'Berserker', etc. Opcional para no romper tests existentes. */
+  keywords?: string[]
   // CD, habilidades y efectos propios: Fase 2+
 }
 
