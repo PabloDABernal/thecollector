@@ -53,7 +53,7 @@ export type EfectoAtomico =
   | { tipo: 'siguienteDañoInabsorbible' }                         // próximo daño al Líder ignora escudo/aliados
   | { tipo: 'dañoATodosAliados'; valor: number }                  // daño fijo a cada Aliado del jugador
   // ── Pendientes (tipo definido, ejecutor lanza error claro) ──────────────────
-  | { tipo: 'cancelar'; alcance: string }
+  | { tipo: 'cancelar'; alcance: 'solo-daño' | 'carta-dramaturgia-entera' }
   | { tipo: 'aplicar-estado'; estado: string; duracion: number }
   | { tipo: 'modificar-dado'; datos: Record<string, unknown> }
 

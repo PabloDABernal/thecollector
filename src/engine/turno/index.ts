@@ -3,6 +3,8 @@ export type {
   DramaturgiaCard,
   TipoAccion,
   EleccionInicio,
+  EfectoAplicado,
+  OrigenEfectoAplicado,
 } from './types'
 export {
   ENERGIA_INICIAL,

@@ -1,6 +1,26 @@
 import type { NucleoPool } from '../nucleos'
 import type { CartaDramaturgia } from '../../content/types'
 
+// ─── Registro de efectos del último turno enemigo (para Contratiempo) ─────────
+
+export type OrigenEfectoAplicado = 'carta-dramaturgia' | 'habilidad' | 'esbirro'
+
+/**
+ * Captura un efecto concreto que el enemigo aplicó, junto con la información
+ * necesaria para revertirlo. Se usa exclusivamente por el efecto `cancelar`.
+ *
+ * Nota: `descarte-jugador` usa `cantidad: number` (no `cartaId`) porque
+ * BattleState.mano es un contador; se actualizará cuando la mano sea una lista.
+ */
+export type EfectoAplicado =
+  | { tipo: 'daño-lider';      cantidad: number; absorbidoPorEscudo: number; origen: OrigenEfectoAplicado }
+  | { tipo: 'trama';           cantidad: number;                              origen: OrigenEfectoAplicado }
+  | { tipo: 'invocar-esbirro'; instanceId: string;                            origen: OrigenEfectoAplicado }
+  | { tipo: 'escudo-enemigo';  cantidad: number;                              origen: OrigenEfectoAplicado }
+  | { tipo: 'curar-enemigo';   cantidad: number;                              origen: OrigenEfectoAplicado }
+  | { tipo: 'energia-jugador'; cantidad: number;                              origen: OrigenEfectoAplicado }
+  | { tipo: 'descarte-jugador'; cantidad: number;                             origen: OrigenEfectoAplicado }
+
 export const ENERGIA_INICIAL = 2
 export const ENERGIA_MAX = 5
 export const MANO_MAX = 10
@@ -74,6 +94,14 @@ export interface BattleState {
   cooldowns: Record<string, number>
   /** Cooldowns de las habilidades del Enemigo. Misma semántica. */
   cooldownsEnemigo: Record<string, number>
+
+  // ── Registro Contratiempo ─────────────────────────────────────────────────
+  /**
+   * Efectos que aplicó el enemigo en su turno más reciente, en orden cronológico.
+   * Se vacía al inicio de cada turno enemigo y se puebla durante él.
+   * El efecto `cancelar` lee este campo para aplicar las inversas.
+   */
+  efectosUltimoTurnoEnemigo: EfectoAplicado[]
 }
 
 /** Tipos de acción disponibles durante el turno del jugador. */

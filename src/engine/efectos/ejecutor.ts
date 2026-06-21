@@ -1,7 +1,7 @@
 import type { NucleoColor } from '../nucleos'
 import type { EfectoAtomico, FormulaAtaque, Keyword } from '../../content/types'
 // Nota: la selección de efectosUmbral vs efectos base ocurre en engine/habilidades/activacion.ts
-import type { BattleState, EsbirroEnMesa } from '../turno/types'
+import type { BattleState, EsbirroEnMesa, EfectoAplicado } from '../turno/types'
 import { ENERGIA_MAX, MANO_MAX, ESCUDO_MAX } from '../turno/types'
 import { aplicarDañoALider, aplicarDañoAEnemigo, type OpcionesDañoLider } from './daño'
 
@@ -29,6 +29,37 @@ function calcularDaño(formula: FormulaAtaque, valorNucleo: number): number {
 
 function esCostesCaos(color: NucleoColor[] | null): boolean {
   return color !== null && color.length === 1 && color[0] === 'morado'
+}
+
+/**
+ * Aplica la inversa de una entrada del registro de Contratiempo.
+ * Cada inversa devuelve el estado más próximo al anterior al efecto original.
+ * Se aplican en orden inverso al de aplicación (último-primero).
+ */
+function aplicarInversa(state: BattleState, entrada: EfectoAplicado): BattleState {
+  switch (entrada.tipo) {
+    case 'daño-lider':
+      return {
+        ...state,
+        leaderHp: Math.min(state.leaderMaxHp, state.leaderHp + entrada.cantidad),
+        escudos:  Math.min(ESCUDO_MAX, state.escudos + entrada.absorbidoPorEscudo),
+      }
+    case 'trama':
+      return { ...state, trama: Math.max(0, state.trama - entrada.cantidad) }
+    case 'invocar-esbirro':
+      return {
+        ...state,
+        esbirros: state.esbirros.filter((e) => e.instanceId !== entrada.instanceId),
+      }
+    case 'escudo-enemigo':
+      return { ...state, escudosEnemigo: Math.max(0, state.escudosEnemigo - entrada.cantidad) }
+    case 'curar-enemigo':
+      return { ...state, enemyHp: Math.max(0, state.enemyHp - entrada.cantidad) }
+    case 'energia-jugador':
+      return { ...state, energia: Math.min(ENERGIA_MAX, state.energia + entrada.cantidad) }
+    case 'descarte-jugador':
+      return { ...state, mano: Math.min(MANO_MAX, state.mano + entrada.cantidad) }
+  }
 }
 
 // ─── Ejecutor principal ───────────────────────────────────────────────────────
@@ -156,8 +187,34 @@ export function aplicarEfecto(
       return { ...state, aliados: nuevosAliados }
     }
 
+    // ── Cancelar (Contratiempo) ────────────────────────────────────────────
+    // Revierte efectos del último turno del enemigo según el alcance.
+    // 'solo-daño': deshace entradas tipo daño-lider (cualquier origen).
+    // 'carta-dramaturgia-entera': deshace todas las entradas con origen 'carta-dramaturgia'.
+    // Las inversas se aplican en orden inverso al de aplicación.
+    // Las entradas revertidas se eliminan del registro para evitar doble reversión.
+    case 'cancelar': {
+      const { alcance } = efecto
+      const todosEfectos = state.efectosUltimoTurnoEnemigo
+
+      const aRevertir =
+        alcance === 'solo-daño'
+          ? todosEfectos.filter((e) => e.tipo === 'daño-lider')
+          : todosEfectos.filter((e) => e.origen === 'carta-dramaturgia')
+
+      let s = state
+      for (const entrada of [...aRevertir].reverse()) {
+        s = aplicarInversa(s, entrada)
+      }
+
+      const revertidosSet = new Set<EfectoAplicado>(aRevertir)
+      return {
+        ...s,
+        efectosUltimoTurnoEnemigo: todosEfectos.filter((e) => !revertidosSet.has(e)),
+      }
+    }
+
     // ── Pendientes ─────────────────────────────────────────────────────────
-    case 'cancelar':
     case 'aplicar-estado':
     case 'modificar-dado':
       throw new Error(

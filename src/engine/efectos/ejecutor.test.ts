@@ -278,12 +278,13 @@ describe('Robar', () => {
 // ─── Efectos pendientes — error claro ────────────────────────────────────────
 
 describe('efectos pendientes (stub)', () => {
-  it('cancelar lanza error "no implementado aún"', () => {
-    const s = createBattleState()
-    const efecto: EfectoAtomico = { tipo: 'cancelar', alcance: 'habilidad' }
-    expect(() => aplicarEfecto(s, efecto, ctxJugador(1))).toThrowError(
-      /no implementado/,
-    )
+  it('cancelar con registro vacío devuelve el mismo estado sin lanzar error', () => {
+    // Registro vacío → no hay nada que revertir; el estado no cambia
+    const s = createBattleState({ efectosUltimoTurnoEnemigo: [] })
+    const efecto: EfectoAtomico = { tipo: 'cancelar', alcance: 'solo-daño' }
+    const s2 = aplicarEfecto(s, efecto, ctxJugador(1))
+    expect(s2.leaderHp).toBe(s.leaderHp)
+    expect(s2.efectosUltimoTurnoEnemigo).toHaveLength(0)
   })
 
   it('invocar: ahora implementado — añade esbirro al estado', () => {
