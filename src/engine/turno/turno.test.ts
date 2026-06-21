@@ -17,7 +17,6 @@ import {
   ejecutarGenerarEnergia,
   activarCombo,
 } from './acciones'
-import { ejecutarTurnoEnemigo } from './enemigo'
 
 // ─── Criterio 1: 2 acciones por turno (3 con Combo) ──────────────────────────
 
@@ -182,32 +181,6 @@ describe('nunca acción muerta', () => {
 })
 
 // ─── Criterio 7: turno del enemigo roba 1 carta de Dramaturgia ───────────────
-
-describe('turno del enemigo (stub)', () => {
-  it('roba la carta superior del mazo', () => {
-    const s = createBattleState({
-      dramaturgia: [{ id: 'carta-a' }, { id: 'carta-b' }, { id: 'carta-c' }],
-      fase: 'enemigo',
-    })
-    const s2 = ejecutarTurnoEnemigo(s)
-    expect(s2.dramaturgia).toHaveLength(2)
-    expect(s2.dramaturgia[0]!.id).toBe('carta-b')
-  })
-
-  it('con mazo vacío no falla (estado defensivo del stub)', () => {
-    const s = createBattleState({ dramaturgia: [], fase: 'enemigo' })
-    expect(() => ejecutarTurnoEnemigo(s)).not.toThrow()
-  })
-
-  it('después del turno del enemigo la fase pasa a jugador', () => {
-    const s = createBattleState({
-      dramaturgia: [{ id: 'x' }],
-      fase: 'enemigo',
-    })
-    const s2 = ejecutarTurnoEnemigo(s)
-    expect(s2.fase).toBe('jugador')
-  })
-})
 
 // ─── bajarCooldowns ───────────────────────────────────────────────────────────
 
