@@ -1,76 +1,66 @@
 # PLAN.md — Hoja de ruta de "The Collector"
 
 > Construimos por fases. El orden importa: **primero el motor, después los
-> gráficos.** Es el equivalente en código del principio de diseño
-> "simulaciones antes que documentos".
+> gráficos.** Principio de diseño: simulaciones antes que documentos.
 
 ---
 
-## Fase 0 · Montaje  ⬅️ EMPEZAMOS AQUÍ
+## Estado actual (22-jun-2026)
 
-Dejar el proyecto arrancando.
+**Fase 1 en curso — motor de reglas.** 271 tests pasan. Specs 01-10 (+10a, 10b) implementadas.
 
-- [ ] Node.js (LTS) instalado.
-- [ ] Carpeta del proyecto abierta en VSCode.
-- [ ] Documentos de diseño en `/docs` y archivos base en su sitio.
-- [ ] Proyecto Vite + React + TypeScript + Tailwind creado y corriendo en el
-      navegador.
-- [ ] Repositorio git inicializado y subido a GitHub.
-
-**Hito:** ves una página en `localhost` desde el navegador del PC.
-
----
-
-## Fase 1 · El motor (sin gráficos)
-
-Las reglas, jugables por consola y con tests. Es el corazón del juego.
-
-- [ ] Tipos del Content Schema (efectos atómicos) en `src/content`.
-- [ ] Estructura de turno (spec 01) en `src/engine`, con tests.
-- [ ] Pool de Núcleos + dados virtuales (spec 02), con tests.
-- [ ] Cooldowns y calentamiento, con tests.
-- [ ] Trama y Dramaturgia.
-- [ ] IA del Enemigo (prioridades + selección de Núcleo).
-- [ ] IA del Líder (heurística básica, ver Devkit §4).
-- [ ] El prototipo (Forjador / Verdugo / Bastión) como datos.
-
-**Hito (cerrar el bucle jugable):** el motor juega una batalla del prototipo de
-principio a fin de forma automática, dada una semilla.
+Lo que funciona:
+- Estructura de turno completa (acciones, cooldowns, inicio).
+- Pool de Núcleos + dados virtuales con semilla.
+- Todos los efectos atómicos (incluido `cancelar`/Contratiempo).
+- IA del Enemigo: fase activa, elección de habilidad y Núcleo, orquestación de 6 pasos.
+- Registro invertible `EfectoAplicado` + `resolverDañoEntrante` con política de redirección y keyword Berserker.
+- IA del Líder tanda 1: `decidirEleccionInicio`, `politicaRedireccionLider`, tipo `Accion`, stub `decidirAccionesTurno`.
 
 ---
 
-## Fase 2 · La interfaz
+## Próximos pasos (orden)
 
-El juego sobre el motor ya funcionando. Que se vea bien en PC.
+### 1. Decisión: modelo de la mano (`BattleState.mano`)
+`mano` es ahora un contador `number`. Para que la IA pueda evaluar cartas (coste de Energía, efectos) hay que convertirlo en `Carta[]`.
 
-- [ ] Tablero, mano, pool de Núcleos, track de Trama.
-- [ ] Cartas con estética "habitación de coleccionista".
-- [ ] Conectar la UI al engine (renderiza estado, envía acciones).
-- [ ] Una batalla jugable de verdad por una persona.
+- Impacta: `BattleState`, `createBattleState`, `cancelar` (descarte), `decidirEleccionInicio` paso 2, validador.
+- Refactor de capas pequeño pero transversal. Hacerlo **antes** de la tanda 2 para no bloquearla.
+- Spec 11 debería cubrir este refactor + los ajustes en tests existentes.
 
-**Hito:** se puede jugar el prototipo con el ratón en el navegador.
+### 2. Spec 11 — IA del Líder tanda 2 (heurística completa)
+Prioridad por turno: letal → Defensor → Trama → daño. Requiere mano como lista (paso 1).
+También: Combo, y elección Energía vs Canalizar delegada a `decidirEleccionInicio`.
 
----
+### 3. Validador (spec 12)
+Corre N batallas Forjador vs Verdugo en Bastión con semillas distintas.
+Agrega métricas del Devkit §5: tasa de victoria, turnos medios, Trama máxima alcanzada.
+Usa `ejecutarTurnoEnemigo` + IA del Líder tanda 2 para cerrar el bucle automático.
 
-## Fase 3 · Validador + Devkit
+### 4. Pasiva del Bastión (paso 1 del turno enemigo)
++1 escudo al Verdugo por cada esbirro en mesa al inicio de su turno.
+Pendiente hasta tener la spec del escenario. Bajo impacto hasta que el validador esté activo.
 
-- [ ] Validador: corre N batallas y agrega las métricas del Devkit §5.
-- [ ] Editor de contenido (formularios → Content Schema).
-- [ ] Calculadora de presupuesto en vivo.
-
-**Hito:** puedo crear/ajustar una carta y simular 1000 batallas para validarla.
-
----
-
-## Fase 4 · Móvil
-
-- [ ] Layout adaptable y táctil.
-- [ ] Empaquetado con Capacitor (iOS/Android).
-
-**Hito:** corre como app en el móvil.
+### 5. Keyword Defensor en esbirros (paso 5)
+Los esbirros con `Defensor` atacan con prioridad en el paso 5.
+Actualmente la selección es aleatoria entre todos los candidatos.
 
 ---
 
-## Estado actual
+## Deudas conscientes
 
-**Fase 0, paso 1.** Montando el entorno.
+| Deuda | Dónde | Impacto | Cuándo resolver |
+|-------|-------|---------|-----------------|
+| `descarte-jugador` en `EfectoAplicado` usa `cantidad: number` (nº de cartas) en vez de `cartaId: string` | `turno/types.ts`, `ejecutor.ts` | Contratiempo no puede restaurar cartas específicas; solo el conteo | Al convertir `mano` a lista |
+| Aliado que cae a 0 HP no se elimina automáticamente de `aliados[]` | `turno/types.ts`, `engine` | Sin efecto mientras no haya lógica de muerte de Aliado | Fase 2+ |
+| Escudo del Bastión (+1 por esbirro) no está tapeado a `ESCUDO_MAX` (5) por diseño, pero la pasiva podría saturarlo | `turno/enemigo.ts` paso 1 | Solo relevante cuando la pasiva se implemente | Al implementar pasiva del Bastión |
+
+---
+
+## Fases futuras (sin cambios)
+
+**Fase 2** — Interfaz: tablero, mano, pool, Trama, cartas con estética de coleccionista. UI conectada al engine. Batalla jugable con ratón.
+
+**Fase 3** — Validador extendido + Devkit: editor de contenido, calculadora de presupuesto en vivo, 1000 batallas por carta nueva.
+
+**Fase 4** — Móvil: layout táctil, Capacitor (iOS/Android).
