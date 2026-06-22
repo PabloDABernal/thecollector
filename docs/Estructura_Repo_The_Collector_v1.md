@@ -2,7 +2,7 @@
 
 > Índice de orientación para reanudar sesiones. No es documentación exhaustiva.
 > Actualizar cuando cambien exports públicos o se implementen nuevas specs.
-> Generado: 2026-06-21 · 248 tests pasan · specs 01-09 implementadas.
+> Generado: 2026-06-22 · 271 tests pasan · specs 01-10 (+10a, 10b) implementadas.
 
 ---
 
@@ -33,11 +33,13 @@ src/
 │   │   └── pool.test.ts
 │   │
 │   ├── efectos/
-│   │   ├── ejecutor.ts        ← aplicarEfecto, ContextoEjecucion
-│   │   ├── daño.ts            ← aplicarDañoALider, aplicarDañoAEnemigo
+│   │   ├── ejecutor.ts        ← aplicarEfecto, aplicarEfectoConCaos, ContextoEjecucion
+│   │   ├── daño.ts            ← aplicarDañoALider, aplicarDañoAEnemigo, resolverDañoEntrante
 │   │   ├── index.ts
 │   │   ├── ejecutor.test.ts
-│   │   └── efectos-restantes.test.ts
+│   │   ├── efectos-restantes.test.ts
+│   │   ├── cancelar.test.ts   ← tests del efecto cancelar (Contratiempo)
+│   │   └── redireccion.test.ts ← tests de resolverDañoEntrante
 │   │
 │   ├── habilidades/
 │   │   ├── activacion.ts      ← activarHabilidad, calentarHabilidades, ResultadoActivacion
@@ -59,11 +61,21 @@ src/
 │   │   ├── index.ts
 │   │   └── ia.test.ts
 │   │
+│   ├── lider/
+│   │   ├── ia.ts              ← NUCLEO_VALOR_MEDIO, Accion, decidirEleccionInicio,
+│   │   │                         politicaRedireccionLider, decidirAccionesTurno (stub)
+│   │   ├── index.ts
+│   │   └── ia.test.ts
+│   │
 │   └── turno/
-│       ├── types.ts           ← BattleState, EsbirroEnMesa, AliAdoEnMesa, TipoAccion, constantes
+│       ├── types.ts           ← BattleState, EsbirroEnMesa, AliAdoEnMesa, TipoAccion,
+│       │                         EfectoAplicado, OrigenEfectoAplicado, PoliticaRedireccion,
+│       │                         EleccionInicio + constantes
 │       ├── estado.ts          ← createBattleState(overrides?) — estado inicial/tests
-│       ├── inicio-turno.ts    ← bajarCooldowns, getEleccionForzada, aplicarEleccionInicio, iniciarTurnoJugador
-│       ├── acciones.ts        ← getAccionesDisponibles, ejecutarCanalizar, ejecutarGenerarEnergia, activarCombo
+│       ├── inicio-turno.ts    ← bajarCooldowns, getEleccionForzada, aplicarEleccionInicio,
+│       │                         iniciarTurnoJugador
+│       ├── acciones.ts        ← getAccionesDisponibles, ejecutarCanalizar,
+│       │                         ejecutarGenerarEnergia, activarCombo
 │       ├── enemigo.ts         ← ejecutarTurnoEnemigo(state, rng, config), ConfigTurnoEnemigo
 │       ├── index.ts
 │       ├── turno.test.ts
@@ -100,18 +112,19 @@ src/
 | `nucleos/types.ts` | `NucleoColor`, `NUCLEO_COLORS`, `NucleoPool`, `NucleoCost`, `DadoVirtualMod` |
 | `nucleos/pool.ts` | `launchPool(rng, mod?)`, `poolSize(pool)`, `isPoolEmpty(pool)`, `gastarNucleo(pool, color)` |
 | `nucleos/dado-virtual.ts` | `rollDado(rng, mod?)` — dado 1-4 con modificadores opcionales |
-| `efectos/ejecutor.ts` | `ContextoEjecucion`, `aplicarEfecto(state, efecto, ctx)` — interpreta toda la unión `EfectoAtomico` |
-| `efectos/daño.ts` | `OpcionesDañoLider`, `aplicarDañoALider(state, cantidad, opciones?)`, `aplicarDañoAEnemigo(state, cantidad)` |
+| `efectos/ejecutor.ts` | `ContextoEjecucion`, `aplicarEfecto(state, efecto, ctx)`, `aplicarEfectoConCaos(state, efecto, ctx)` — interpreta toda la unión `EfectoAtomico` incluyendo `cancelar` |
+| `efectos/daño.ts` | `OpcionesDañoLider`, `DañoEntrante`, `aplicarDañoALider(state, cantidad, opciones?)`, `aplicarDañoAEnemigo(state, cantidad)`, `resolverDañoEntrante(state, daño, politica, origen)` |
 | `habilidades/activacion.ts` | `ResultadoActivacion`, `calentarHabilidades(habilidades)`, `activarHabilidad(state, habilidad, nucleo, fuente)` |
 | `dramaturgia/mazo.ts` | `ResultadoRobo`, `barajar(cartas, rng)`, `robarCarta(state, rng)` — con deck-out automático |
 | `esbirros/mesa.ts` | `limpiarEsbirrosMuertos(state)` |
 | `enemigo/fases.ts` | `faseActiva(hpActual, fases)` — fase activa derivada del HP, sin estado guardado |
 | `enemigo/ia.ts` | `COLORES_JUGADOR_PROTOTIPO`, `elegirHabilidad(icono, cooldowns, pool, habilidades)`, `elegirNucleo(coste, pool, coloresJugador?)` |
-| `turno/types.ts` | `BattleState`, `EsbirroEnMesa`, `AliAdoEnMesa`, `TipoAccion`, `EleccionInicio` + constantes (`ENERGIA_MAX`, `MANO_MAX`, `ACCIONES_POR_TURNO`, `ESCUDO_MAX`) |
+| `turno/types.ts` | `BattleState` (con `efectosUltimoTurnoEnemigo: EfectoAplicado[]`), `EsbirroEnMesa`, `AliAdoEnMesa` (con `keywords?: string[]`), `TipoAccion`, `EleccionInicio`, `EfectoAplicado` (unión de 7 variantes invertibles), `OrigenEfectoAplicado`, `PoliticaRedireccion` + constantes (`ENERGIA_MAX`, `MANO_MAX`, `ACCIONES_POR_TURNO`, `ESCUDO_MAX`) |
 | `turno/estado.ts` | `createBattleState(overrides?)` — estado inicial para tests y partidas nuevas |
-| `turno/inicio-turno.ts` | `bajarCooldowns(state)`, `getEleccionForzada(state)`, `aplicarEleccionInicio(state, eleccion)`, `iniciarTurnoJugador(state)` |
+| `turno/inicio-turno.ts` | `bajarCooldowns(state)`, `getEleccionForzada(state)`, `aplicarEleccionInicio(state, eleccion)`, `iniciarTurnoJugador(state, eleccion)` |
 | `turno/acciones.ts` | `getAccionesDisponibles(state)`, `ejecutarCanalizar(state)`, `ejecutarGenerarEnergia(state)`, `activarCombo(state)` |
-| `turno/enemigo.ts` | `ConfigTurnoEnemigo`, `ejecutarTurnoEnemigo(state, rng, config)` — turno completo (6 pasos) |
+| `turno/enemigo.ts` | `ConfigTurnoEnemigo` (con `politicaRedireccion?: PoliticaRedireccion`), `ejecutarTurnoEnemigo(state, rng, config)` — turno completo (6 pasos) |
+| `lider/ia.ts` | `NUCLEO_VALOR_MEDIO` (= 2.5), `Accion` (unión: canalizar/generar-energia/activar-habilidad/bajar-carta), `decidirEleccionInicio(state, cartasMano?)`, `politicaRedireccionLider` (constante `PoliticaRedireccion`), `decidirAccionesTurno(state)` (stub → tanda 2) |
 
 ### `validator/` y `ui/`
 
@@ -126,14 +139,18 @@ src/
 
 | Tipo | Fichero | Nota |
 |------|---------|------|
-| `BattleState` | `src/engine/turno/types.ts` | Estado completo de la batalla; todas las funciones del engine lo reciben y devuelven |
+| `BattleState` | `src/engine/turno/types.ts` | Estado completo de la batalla; todas las funciones del engine lo reciben y devuelven. Incluye `efectosUltimoTurnoEnemigo: EfectoAplicado[]` |
 | `EfectoAtomico` | `src/content/types.ts` | Unión discriminada (17 miembros); el engine los interpreta, nunca hay lógica por carta |
+| `EfectoAplicado` | `src/engine/turno/types.ts` | Registro invertible de un efecto aplicado por el enemigo (7 variantes); usado por `cancelar` (Contratiempo) |
+| `PoliticaRedireccion` | `src/engine/turno/types.ts` | Función `(state, daño) → destino` que decide si el daño de un esbirro va al Líder o a un Aliado |
+| `Accion` | `src/engine/lider/ia.ts` | Unión de acciones que puede ejecutar la IA del Líder: canalizar / generar-energia / activar-habilidad / bajar-carta |
 | `Habilidad` | `src/content/types.ts` | Describe una habilidad con efectos, coste y keywords; usada por Líder y Enemigo |
 | `CartaDramaturgia` | `src/content/types.ts` | Carta del mazo del enemigo: `icono` ('ataque'/'trama') + `efectos: EfectoAtomico[]` |
 | `NucleoPool` | `src/engine/nucleos/types.ts` | `Partial<Record<NucleoColor, number>>` — color presente = activo; ausente = gastado |
-| `NucleoColor` | `src/engine/nucleos/types.ts` | `'rojo' | 'azul' | 'verde' | 'amarillo' | 'morado'` |
+| `NucleoColor` | `src/engine/nucleos/types.ts` | `'rojo' \| 'azul' \| 'verde' \| 'amarillo' \| 'morado'` |
 | `EsbirroTemplate` | `src/content/types.ts` | Plantilla de tipo de esbirro (datos); la instancia en mesa es `EsbirroEnMesa` |
-| `EsbirroEnMesa` | `src/engine/turno/types.ts` | Instancia de esbirro activo: `instanceId`, `vidaActual`, `recienInvocado`, etc. |
+| `EsbirroEnMesa` | `src/engine/turno/types.ts` | Instancia de esbirro activo: `instanceId`, `vidaActual`, `recienInvocado`, `keywords`, etc. |
+| `AliAdoEnMesa` | `src/engine/turno/types.ts` | Aliado del jugador en mesa: `id`, `hp`, `maxHp`, `keywords?: string[]` (Berserker fuerza redirección) |
 | `FaseEnemigo` / `Enemigo` | `src/content/types.ts` | Fases del enemigo (`activaA` = HP umbral); `faseActiva()` las deriva sin estado |
 | `Rng` | `src/engine/rng.ts` | `() => number` — generador con semilla inyectado; misma semilla = partida reproducible |
 | `ContextoEjecucion` | `src/engine/efectos/ejecutor.ts` | Contexto de un efecto: `fuente` ('jugador'/'enemigo'), `valorNucleo`, `keywords`, etc. |
@@ -149,20 +166,23 @@ src/
 | 03 | Efectos atómicos base (ataque, defensa, curar, trama, energía, robar) | **Implementada** | `ejecutor.test.ts` — 30 tests |
 | 04 | Cooldowns y activación de habilidades (`activarHabilidad`) | **Implementada** | `activacion.test.ts` — 25 tests |
 | 05 | Esbirros (`invocar`, `EsbirroEnMesa`, `limpiarEsbirrosMuertos`) | **Implementada** | `esbirros.test.ts` — 15 tests |
-| 06 | Efectos restantes para Dramaturgia (`dañoFijo`, `buffAtaqueTemporal`, `siguienteDañoInabsorbible`, `dañoATodosAliados`, `descartar`, generalizar `curar`/`defensa`) | **Implementada** | `efectos-restantes.test.ts` — 26 tests |
+| 06 | Efectos restantes para Dramaturgia (`dañoFijo`, `buffAtaqueTemporal`, `siguienteDañoInabsorbible`, `dañoATodosAliados`, `descartar`) | **Implementada** | `efectos-restantes.test.ts` — 26 tests |
 | 07 | Mazo de Dramaturgia (30 cartas, `barajar`, `robarCarta`, deck-out) | **Implementada** | `mazo.test.ts` — 24 tests |
 | 08 | Turno enemigo — cabeza: `faseActiva`, `elegirHabilidad`, `elegirNucleo` | **Implementada** | `ia.test.ts` — 26 tests |
 | 09 | Turno enemigo — orquestación completa (6 pasos, `ejecutarTurnoEnemigo`) | **Implementada** | `enemigo.test.ts` — 9 tests |
+| 10a | Efecto `cancelar` (Contratiempo): registro `EfectoAplicado`, `difToRegistro`, inversas | **Implementada** | `cancelar.test.ts` — 6 tests |
+| 10b | Paso 5 redirección: `PoliticaRedireccion`, `resolverDañoEntrante`, keyword Berserker | **Implementada** | `redireccion.test.ts` — 6 tests |
+| 10 | IA del Líder tanda 1: `decidirEleccionInicio`, `politicaRedireccionLider`, tipo `Accion`, stub `decidirAccionesTurno` | **Implementada** | `lider/ia.test.ts` — 7 tests |
+| — | IA del Líder tanda 2: heurística completa (letal → Defensor → Trama → daño) | **Pendiente** | — |
 | — | Validator (simulación de N batallas) | **Pendiente** | — |
 | — | UI: conectar engine a React | **Pendiente** | — |
 
 ### Huecos conocidos dentro de specs implementadas
 
-- `engine/esbirros/mesa.ts`: selección aleatoria de esbirro activo por turno → resuelto en spec 09
 - `engine/turno/enemigo.ts` paso 1: pasiva del Bastión (+1 escudo/esbirro) → pendiente hasta spec del escenario
-- `engine/turno/enemigo.ts` paso 5: keyword `Defensor` (prioridad de objetivo) → pendiente
-- `engine/turno/enemigo.ts` paso 5: redirección de daño de esbirro a Aliado → pendiente
-- `ejecutor.ts`: efectos `cancelar`, `aplicar-estado`, `modificar-dado` → stubs, lanzan error claro
+- `engine/turno/enemigo.ts` paso 5: keyword `Defensor` en esbirros (prioridad de ataque entre candidatos) → pendiente
+- `lider/ia.ts` `decidirEleccionInicio` paso 2: necesita `cartasMano: Carta[]` externo porque `BattleState.mano` es un contador, no una lista de cartas
+- `lider/ia.ts` `decidirAccionesTurno`: stub que devuelve `[{tipo:'canalizar'}]` — heurística completa en tanda 2
 
 ---
 
